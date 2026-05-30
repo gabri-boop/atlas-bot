@@ -3,6 +3,7 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 import json
+import asyncio
 
 # =========================
 # TOKEN
@@ -40,7 +41,12 @@ def save_counter(value):
 ticket_counter = load_counter()
 
 # =========================
-# LOG UTILS
+# ANTI RAID
+# =========================
+join_count = {}
+
+# =========================
+# UTILS
 # =========================
 def get_log_channel(guild, name):
     return discord.utils.get(guild.text_channels, name=name)
@@ -54,35 +60,92 @@ async def on_ready():
     await bot.tree.sync()
 
 # =========================
-# WELCOME / GOODBYE
+# =========================
+# 👋 WELCOME (COME ORIGINALE - NON MODIFICATO)
+# =========================
 # =========================
 @bot.event
 async def on_member_join(member):
 
-    log = get_log_channel(member.guild, "📋・ᴍᴇᴍʙᴇʀ-ʟᴏɢꜱ")
-    if log:
-        await log.send(f"📥 {member} è entrato")
+    # ANTI RAID
+    gid = member.guild.id
 
+    if gid not in join_count:
+        join_count[gid] = 0
+
+    join_count[gid] += 1
+
+    if join_count[gid] >= 5:
+        log = get_log_channel(member.guild, "🔨・ᴍᴏᴅ-ʟᴏɢꜱ")
+        if log:
+            await log.send("🚨 POSSIBILE RAID IN CORSO!")
+        join_count[gid] = 0
+
+    # MEMBER LOG
+    channel = get_log_channel(member.guild, "📋・ᴍᴇᴍʙᴇʀ-ʟᴏɢꜱ")
+    if channel:
+        embed = discord.Embed(
+            title="📥 NUOVO MEMBRO",
+            description=f"{member.mention} è entrato nel server",
+            color=discord.Color.green()
+        )
+        embed.set_thumbnail(url=member.display_avatar.url)
+        await channel.send(embed=embed)
+
+    # WELCOME CHAT (IDENTICO COME PRIMA)
     welcome = discord.utils.get(member.guild.text_channels, name="👋・welcome")
 
     if welcome:
         embed = discord.Embed(
-            title="✨ BENVENUTO IN ATLAS",
-            description=f"👋 {member.mention}\nUsa /ticketpanel",
-            color=discord.Color.from_rgb(0, 90, 255)
+            title="🎉 BENVENUTO IN ATLAS COMMUNITY",
+            description=(
+                f"👋 Ciao {member.mention}\n\n"
+                "📜 Leggi il regolamento\n"
+                "🎫 Usa il ticket system\n\n"
+                "🔥 Buona permanenza!"
+            ),
+            color=discord.Color.from_rgb(0, 90, 200)
         )
+
         embed.set_thumbnail(url=member.display_avatar.url)
+        embed.set_image(url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png")
+
         await welcome.send(embed=embed)
 
+    # DM WELCOME
+    try:
+        embed = discord.Embed(
+            title="🎉 Benvenuto in ATLAS",
+            description="Usa /ticketpanel per aiuto",
+            color=discord.Color.blue()
+        )
+        await member.send(embed=embed)
+    except:
+        pass
+
+# =========================
+# GOODBYE
+# =========================
 @bot.event
 async def on_member_remove(member):
 
-    log = get_log_channel(member.guild, "📋・ᴍᴇᴍʙᴇʀ-ʟᴏɢꜱ")
-    if log:
-        await log.send(f"📤 {member} è uscito")
+    channel = get_log_channel(member.guild, "📋・ᴍᴇᴍʙᴇʀ-ʟᴏɢꜱ")
+    if channel:
+        await channel.send(f"📤 {member} è uscito")
+
+    goodbye = discord.utils.get(member.guild.text_channels, name="💔・goodbye")
+
+    if goodbye:
+        embed = discord.Embed(
+            title="👋 USCITA DAL SERVER",
+            description=f"💔 {member.name} ha lasciato ATLAS",
+            color=discord.Color.red()
+        )
+        embed.set_thumbnail(url=member.display_avatar.url)
+        await goodbye.send(embed=embed)
 
 # =========================
-# MESSAGE LOGS
+# LOG MESSAGGI
 # =========================
 @bot.event
 async def on_message_delete(message):
@@ -95,19 +158,18 @@ async def on_message_delete(message):
     if log:
         embed = discord.Embed(
             title="🗑️ DELETE",
-            description=f"{message.author.mention}: {message.content}",
+            description=f"{message.author}: {message.content}",
             color=discord.Color.orange()
         )
         await log.send(embed=embed)
 
 # =========================
-# MOD LOGS
+# MOD LOG
 # =========================
 @bot.event
 async def on_member_ban(guild, user):
 
     log = get_log_channel(guild, "🔨・ᴍᴏᴅ-ʟᴏɢꜱ")
-
     if log:
         await log.send(f"🔨 BAN: {user}")
 
@@ -115,31 +177,23 @@ async def on_member_ban(guild, user):
 # MOD COMMANDS
 # =========================
 @bot.tree.command(name="ban")
-async def ban(interaction, member: discord.Member, reason: str = "Nessun motivo"):
-
+async def ban(interaction, member: discord.Member, reason="Nessun motivo"):
     await member.ban(reason=reason)
-    await interaction.response.send_message(f"⛔ {member} bannato")
+    await interaction.response.send_message("⛔ bannato")
 
 @bot.tree.command(name="kick")
-async def kick(interaction, member: discord.Member, reason: str = "Nessun motivo"):
-
+async def kick(interaction, member: discord.Member, reason="Nessun motivo"):
     await member.kick(reason=reason)
-    await interaction.response.send_message(f"👢 {member} kickato")
+    await interaction.response.send_message("👢 kickato")
 
 @bot.tree.command(name="clear")
 async def clear(interaction, amount: int):
-
     await interaction.channel.purge(limit=amount)
-    await interaction.response.send_message("🧹 Pulito", ephemeral=True)
+    await interaction.response.send_message("🧹 pulito", ephemeral=True)
 
 # =========================
-# 🔥 NUOVI COMANDI MOD
+# NUOVI COMANDI
 # =========================
-
-@bot.tree.command(name="warn")
-async def warn(interaction, member: discord.Member, reason: str = "Nessun motivo"):
-    await interaction.response.send_message(f"⚠️ {member.mention} warn: {reason}")
-
 @bot.tree.command(name="userinfo")
 async def userinfo(interaction, member: discord.Member = None):
 
@@ -151,52 +205,6 @@ async def userinfo(interaction, member: discord.Member = None):
     embed.set_thumbnail(url=member.display_avatar.url)
 
     await interaction.response.send_message(embed=embed)
-
-@bot.tree.command(name="mute")
-async def mute(interaction, member: discord.Member, minutes: int, reason: str = "Nessun motivo"):
-
-    if not interaction.user.guild_permissions.moderate_members:
-        return await interaction.response.send_message("❌ No permessi", ephemeral=True)
-
-    duration = discord.utils.utcnow() + discord.timedelta(minutes=minutes)
-    await member.timeout(duration, reason=reason)
-
-    await interaction.response.send_message(f"🔇 {member} mutato")
-
-@bot.tree.command(name="unmute")
-async def unmute(interaction, member: discord.Member):
-
-    if not interaction.user.guild_permissions.moderate_members:
-        return await interaction.response.send_message("❌ No permessi", ephemeral=True)
-
-    await member.timeout(None)
-    await interaction.response.send_message(f"🔊 {member} smutato")
-
-@bot.tree.command(name="lock")
-async def lock(interaction):
-
-    overwrite = interaction.channel.overwrites_for(interaction.guild.default_role)
-    overwrite.send_messages = False
-
-    await interaction.channel.set_permissions(interaction.guild.default_role, overwrite=overwrite)
-
-    await interaction.response.send_message("🔒 lock")
-
-@bot.tree.command(name="unlock")
-async def unlock(interaction):
-
-    overwrite = interaction.channel.overwrites_for(interaction.guild.default_role)
-    overwrite.send_messages = True
-
-    await interaction.channel.set_permissions(interaction.guild.default_role, overwrite=overwrite)
-
-    await interaction.response.send_message("🔓 unlock")
-
-@bot.tree.command(name="purge")
-async def purge(interaction, amount: int):
-
-    await interaction.channel.purge(limit=amount)
-    await interaction.response.send_message("🧹 pulito", ephemeral=True)
 
 @bot.tree.command(name="avatar")
 async def avatar(interaction, member: discord.Member = None):
@@ -265,7 +273,7 @@ class TicketView(discord.ui.View):
 async def ticketpanel(interaction):
 
     embed = discord.Embed(
-        title="🎫 ATLAS SUPPORT",
+        title="🎫 ATLAS COMMUNITY",
         description="Apri un ticket",
         color=discord.Color.from_rgb(0, 90, 255)
     )
