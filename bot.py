@@ -54,7 +54,7 @@ async def on_ready():
     await bot.tree.sync()
 
 # =========================
-# WELCOME
+# WELCOME / GOODBYE
 # =========================
 @bot.event
 async def on_member_join(member):
@@ -67,18 +67,13 @@ async def on_member_join(member):
 
     if welcome:
         embed = discord.Embed(
-            title="✨ BENVENUTO IN ATLAS COMMUNITY",
-            description=f"👋 {member.mention}\n\n📜 Leggi il regolamento\n🎫 Usa /ticketpanel\n🔥 Buon divertimento!",
+            title="✨ BENVENUTO IN ATLAS",
+            description=f"👋 {member.mention}\nUsa /ticketpanel",
             color=discord.Color.from_rgb(0, 90, 255)
         )
         embed.set_thumbnail(url=member.display_avatar.url)
-        embed.set_image(url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png")
-
         await welcome.send(embed=embed)
 
-# =========================
-# GOODBYE
-# =========================
 @bot.event
 async def on_member_remove(member):
 
@@ -99,30 +94,10 @@ async def on_message_delete(message):
 
     if log:
         embed = discord.Embed(
-            title="🗑️ MESSAGGIO ELIMINATO",
-            description=f"**Utente:** {message.author.mention}\n**Canale:** {message.channel.mention}\n**Contenuto:** {message.content}",
+            title="🗑️ DELETE",
+            description=f"{message.author.mention}: {message.content}",
             color=discord.Color.orange()
         )
-        await log.send(embed=embed)
-
-@bot.event
-async def on_message_edit(before, after):
-
-    if not before.guild or before.author.bot:
-        return
-
-    if before.content == after.content:
-        return
-
-    log = get_log_channel(before.guild, "📝・ᴍᴇꜱꜱᴀɢᴇ-ʟᴏɢꜱ")
-
-    if log:
-        embed = discord.Embed(
-            title="✏️ MESSAGGIO MODIFICATO",
-            description=f"**Prima:** {before.content}\n**Dopo:** {after.content}",
-            color=discord.Color.blue()
-        )
-        embed.set_author(name=str(before.author))
         await log.send(embed=embed)
 
 # =========================
@@ -134,16 +109,13 @@ async def on_member_ban(guild, user):
     log = get_log_channel(guild, "🔨・ᴍᴏᴅ-ʟᴏɢꜱ")
 
     if log:
-        await log.send(f"🔨 {user} bannato")
+        await log.send(f"🔨 BAN: {user}")
 
 # =========================
-# MOD COMMANDS FIXED
+# MOD COMMANDS
 # =========================
 @bot.tree.command(name="ban")
 async def ban(interaction, member: discord.Member, reason: str = "Nessun motivo"):
-
-    if not interaction.user.guild_permissions.ban_members:
-        return await interaction.response.send_message("❌ No permessi", ephemeral=True)
 
     await member.ban(reason=reason)
     await interaction.response.send_message(f"⛔ {member} bannato")
@@ -151,35 +123,102 @@ async def ban(interaction, member: discord.Member, reason: str = "Nessun motivo"
 @bot.tree.command(name="kick")
 async def kick(interaction, member: discord.Member, reason: str = "Nessun motivo"):
 
-    if not interaction.user.guild_permissions.kick_members:
-        return await interaction.response.send_message("❌ No permessi", ephemeral=True)
-
     await member.kick(reason=reason)
-    await interaction.response.send_message(f"👢 kickato")
+    await interaction.response.send_message(f"👢 {member} kickato")
 
 @bot.tree.command(name="clear")
 async def clear(interaction, amount: int):
 
-    if not interaction.user.guild_permissions.manage_messages:
-        return await interaction.response.send_message("❌ No permessi", ephemeral=True)
-
     await interaction.channel.purge(limit=amount)
-    await interaction.response.send_message(f"🧹 eliminati {amount}", ephemeral=True)
+    await interaction.response.send_message("🧹 Pulito", ephemeral=True)
 
 # =========================
-# TICKET CLOSE BUTTON FIX
+# 🔥 NUOVI COMANDI MOD
+# =========================
+
+@bot.tree.command(name="warn")
+async def warn(interaction, member: discord.Member, reason: str = "Nessun motivo"):
+    await interaction.response.send_message(f"⚠️ {member.mention} warn: {reason}")
+
+@bot.tree.command(name="userinfo")
+async def userinfo(interaction, member: discord.Member = None):
+
+    member = member or interaction.user
+
+    embed = discord.Embed(title="👤 USER INFO", color=discord.Color.blue())
+    embed.add_field(name="Nome", value=member.name)
+    embed.add_field(name="ID", value=member.id)
+    embed.set_thumbnail(url=member.display_avatar.url)
+
+    await interaction.response.send_message(embed=embed)
+
+@bot.tree.command(name="mute")
+async def mute(interaction, member: discord.Member, minutes: int, reason: str = "Nessun motivo"):
+
+    if not interaction.user.guild_permissions.moderate_members:
+        return await interaction.response.send_message("❌ No permessi", ephemeral=True)
+
+    duration = discord.utils.utcnow() + discord.timedelta(minutes=minutes)
+    await member.timeout(duration, reason=reason)
+
+    await interaction.response.send_message(f"🔇 {member} mutato")
+
+@bot.tree.command(name="unmute")
+async def unmute(interaction, member: discord.Member):
+
+    if not interaction.user.guild_permissions.moderate_members:
+        return await interaction.response.send_message("❌ No permessi", ephemeral=True)
+
+    await member.timeout(None)
+    await interaction.response.send_message(f"🔊 {member} smutato")
+
+@bot.tree.command(name="lock")
+async def lock(interaction):
+
+    overwrite = interaction.channel.overwrites_for(interaction.guild.default_role)
+    overwrite.send_messages = False
+
+    await interaction.channel.set_permissions(interaction.guild.default_role, overwrite=overwrite)
+
+    await interaction.response.send_message("🔒 lock")
+
+@bot.tree.command(name="unlock")
+async def unlock(interaction):
+
+    overwrite = interaction.channel.overwrites_for(interaction.guild.default_role)
+    overwrite.send_messages = True
+
+    await interaction.channel.set_permissions(interaction.guild.default_role, overwrite=overwrite)
+
+    await interaction.response.send_message("🔓 unlock")
+
+@bot.tree.command(name="purge")
+async def purge(interaction, amount: int):
+
+    await interaction.channel.purge(limit=amount)
+    await interaction.response.send_message("🧹 pulito", ephemeral=True)
+
+@bot.tree.command(name="avatar")
+async def avatar(interaction, member: discord.Member = None):
+
+    member = member or interaction.user
+
+    embed = discord.Embed()
+    embed.set_image(url=member.display_avatar.url)
+
+    await interaction.response.send_message(embed=embed)
+
+# =========================
+# TICKET SYSTEM
 # =========================
 class CloseView(discord.ui.View):
     def __init__(self):
-        super().__init__(timeout=None)
+        super().__init__()
 
-    @discord.ui.button(label="Chiudi Ticket", style=discord.ButtonStyle.red, emoji="🔒")
-    async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(label="Chiudi", style=discord.ButtonStyle.red)
+    async def close(self, interaction, button):
         await interaction.channel.delete()
 
-# =========================
-# CREATE TICKET FIX
-# =========================
 async def create_ticket(interaction, category):
 
     global ticket_counter
@@ -187,68 +226,49 @@ async def create_ticket(interaction, category):
     ticket_counter += 1
     save_counter(ticket_counter)
 
-    ticket_id = str(ticket_counter).zfill(4)
+    tid = str(ticket_counter).zfill(4)
 
-    guild = interaction.guild
-    user = interaction.user
-
-    cat = discord.utils.get(guild.categories, name="🎫 tickets")
+    cat = discord.utils.get(interaction.guild.categories, name="🎫 tickets")
     if not cat:
-        cat = await guild.create_category("🎫 tickets")
+        cat = await interaction.guild.create_category("🎫 tickets")
 
-    channel = await guild.create_text_channel(
-        name=f"{category}-{ticket_id}",
-        category=cat
-    )
+    ch = await interaction.guild.create_text_channel(f"{category}-{tid}", category=cat)
 
-    await channel.set_permissions(guild.default_role, view_channel=False)
-    await channel.set_permissions(user, view_channel=True, send_messages=True)
+    await ch.set_permissions(interaction.guild.default_role, view_channel=False)
+    await ch.set_permissions(interaction.user, view_channel=True, send_messages=True)
 
     embed = discord.Embed(
-        title=f"🎫 TICKET #{ticket_id}",
-        description=f"Categoria: {category.upper()}\nStaff ti risponderà presto.",
+        title=f"🎫 TICKET #{tid}",
+        description=f"Categoria: {category}",
         color=discord.Color.from_rgb(0, 90, 255)
     )
 
-    await channel.send(embed=embed, view=CloseView())
+    await ch.send(embed=embed, view=CloseView())
 
-    await interaction.response.send_message(f"Ticket creato: {channel.mention}", ephemeral=True)
+    await interaction.response.send_message(f"Creato {ch.mention}", ephemeral=True)
 
-# =========================
-# TICKET PANEL FIX
-# =========================
 class TicketView(discord.ui.View):
 
-    @discord.ui.button(label="OWNER", style=discord.ButtonStyle.danger, emoji="👑")
-    async def owner(self, interaction, button):
-        await create_ticket(interaction, "owner")
+    @discord.ui.button(label="OWNER", style=discord.ButtonStyle.danger)
+    async def owner(self, i, b):
+        await create_ticket(i, "owner")
 
-    @discord.ui.button(label="STAFF", style=discord.ButtonStyle.primary, emoji="🛡️")
-    async def staff(self, interaction, button):
-        await create_ticket(interaction, "staff")
+    @discord.ui.button(label="STAFF", style=discord.ButtonStyle.primary)
+    async def staff(self, i, b):
+        await create_ticket(i, "staff")
 
-    @discord.ui.button(label="VALLEY", style=discord.ButtonStyle.success, emoji="🏝️")
-    async def valley(self, interaction, button):
-        await create_ticket(interaction, "valley")
-
-    @discord.ui.button(label="SUPPORTO", style=discord.ButtonStyle.secondary, emoji="🎮")
-    async def supporto(self, interaction, button):
-        await create_ticket(interaction, "supporto")
-
-    @discord.ui.button(label="BUG", style=discord.ButtonStyle.secondary, emoji="🐛")
-    async def bug(self, interaction, button):
-        await create_ticket(interaction, "bug")
+    @discord.ui.button(label="VALLEY", style=discord.ButtonStyle.success)
+    async def valley(self, i, b):
+        await create_ticket(i, "valley")
 
 @bot.tree.command(name="ticketpanel")
 async def ticketpanel(interaction):
 
     embed = discord.Embed(
-        title="⚡ ATLAS COMMUNITY SUPPORT",
-        description="Seleziona una categoria per aprire un ticket",
+        title="🎫 ATLAS SUPPORT",
+        description="Apri un ticket",
         color=discord.Color.from_rgb(0, 90, 255)
     )
-
-    embed.set_image(url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png")
 
     await interaction.response.send_message(embed=embed, view=TicketView())
 
