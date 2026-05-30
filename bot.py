@@ -52,7 +52,7 @@ async def on_ready():
         print(e)
 
 # =========================
-# WELCOME
+# WELCOME SYSTEM
 # =========================
 @bot.event
 async def on_member_join(member):
@@ -64,21 +64,20 @@ async def on_member_join(member):
             title="🎉 BENVENUTO IN ATLAS COMMUNITY",
             description=(
                 f"👋 Ciao {member.mention}\n\n"
-                "Benvenuto nella community ufficiale.\n"
+                "Sei entrato nella community ufficiale.\n\n"
                 "📜 Leggi il regolamento\n"
-                "🎫 Usa /ticketpanel per aprire un ticket\n\n"
+                "🎫 Usa il ticket system per supporto\n\n"
                 "🔥 Buona permanenza!"
             ),
-            color=discord.Color.from_rgb(20, 30, 55)
+            color=discord.Color.green()
         )
 
         embed.set_thumbnail(url=member.display_avatar.url)
-        embed.set_image(url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png")
 
         await channel.send(content=f"👋 {member.mention}", embed=embed)
 
 # =========================
-# GOODBYE
+# GOODBYE SYSTEM
 # =========================
 @bot.event
 async def on_member_remove(member):
@@ -88,11 +87,60 @@ async def on_member_remove(member):
     if channel:
         embed = discord.Embed(
             title="👋 UTENTE USCITO",
-            description=f"{member.name} ha lasciato ATLAS COMMUNITY.",
+            description=(
+                f"💔 **{member.name}** ha lasciato ATLAS COMMUNITY\n\n"
+                "📉 Speriamo di rivederti presto"
+            ),
             color=discord.Color.red()
         )
 
+        embed.set_thumbnail(url=member.display_avatar.url)
+
         await channel.send(embed=embed)
+
+# =========================
+# TEST WELCOME
+# =========================
+@bot.tree.command(name="benvenuto", description="Test sistema benvenuto")
+async def benvenuto(interaction: discord.Interaction):
+
+    member = interaction.user
+
+    embed = discord.Embed(
+        title="🎉 TEST WELCOME",
+        description=(
+            f"👋 Benvenuto {member.mention}\n\n"
+            "Simulazione sistema ATLAS COMMUNITY\n\n"
+            "📜 Regolamento (TEST)\n"
+            "🎫 Ticket system (TEST)"
+        ),
+        color=discord.Color.green()
+    )
+
+    embed.set_thumbnail(url=member.display_avatar.url)
+
+    await interaction.response.send_message(embed=embed)
+
+# =========================
+# TEST GOODBYE
+# =========================
+@bot.tree.command(name="addio", description="Test sistema addio")
+async def addio(interaction: discord.Interaction):
+
+    member = interaction.user
+
+    embed = discord.Embed(
+        title="👋 TEST GOODBYE",
+        description=(
+            f"💔 {member.name} ha lasciato il server (TEST)\n\n"
+            "Simulazione sistema uscita"
+        ),
+        color=discord.Color.red()
+    )
+
+    embed.set_thumbnail(url=member.display_avatar.url)
+
+    await interaction.response.send_message(embed=embed)
 
 # =========================
 # MOD COMMANDS
@@ -211,12 +259,10 @@ async def ticketpanel(interaction: discord.Interaction):
         title="🎫 SISTEMA TICKET — ATLAS COMMUNITY",
         description=(
             "🎫 Apri un ticket se hai bisogno di aiuto 💬🔥\n\n"
-            "Seleziona una categoria qui sotto."
+            "Seleziona una categoria."
         ),
         color=discord.Color.from_rgb(15, 18, 25)
     )
-
-    embed.set_image(url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275950234042528/ChatGPT_Image_30_mag_2026_13_23_39.png")
 
     await interaction.response.send_message(embed=embed, view=TicketView())
 
