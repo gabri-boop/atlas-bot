@@ -23,7 +23,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # =========================
-# TICKET COUNTER
+# COUNTER TICKET
 # =========================
 COUNTER_FILE = "ticket_counter.json"
 
@@ -59,22 +59,25 @@ async def on_member_join(member):
 
     channel = discord.utils.get(member.guild.text_channels, name="👋・welcome")
 
-    if channel:
-        embed = discord.Embed(
-            title="🎉 BENVENUTO IN ATLAS COMMUNITY",
-            description=(
-                f"👋 Ciao {member.mention}\n\n"
-                "Sei entrato nella community ufficiale.\n\n"
-                "📜 Leggi il regolamento\n"
-                "🎫 Usa il ticket system per supporto\n\n"
-                "🔥 Buona permanenza!"
-            ),
-            color=discord.Color.green()
-        )
+    if not channel:
+        return
 
-        embed.set_thumbnail(url=member.display_avatar.url)
+    embed = discord.Embed(
+        title="🎉 BENVENUTO IN ATLAS COMMUNITY",
+        description=(
+            f"👋 Ciao {member.mention}\n\n"
+            "Sei entrato nella community ufficiale ATLAS.\n\n"
+            "📜 Leggi il regolamento\n"
+            "🎫 Usa il ticket system per supporto\n\n"
+            "🔥 Buona permanenza!"
+        ),
+        color=discord.Color.from_rgb(20, 30, 55)
+    )
 
-        await channel.send(content=f"👋 {member.mention}", embed=embed)
+    embed.set_thumbnail(url=member.display_avatar.url)
+    embed.set_image(url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png")
+
+    await channel.send(content=f"👋 {member.mention}", embed=embed)
 
 # =========================
 # GOODBYE SYSTEM
@@ -82,26 +85,29 @@ async def on_member_join(member):
 @bot.event
 async def on_member_remove(member):
 
-    channel = discord.utils.get(member.guild.text_channels, name="👋・welcome")
+    channel = discord.utils.get(member.guild.text_channels, name="💔・goodbye")
 
-    if channel:
-        embed = discord.Embed(
-            title="👋 UTENTE USCITO",
-            description=(
-                f"💔 **{member.name}** ha lasciato ATLAS COMMUNITY\n\n"
-                "📉 Speriamo di rivederti presto"
-            ),
-            color=discord.Color.red()
-        )
+    if not channel:
+        return
 
-        embed.set_thumbnail(url=member.display_avatar.url)
+    embed = discord.Embed(
+        title="👋 USCITA DAL SERVER",
+        description=(
+            f"💔 **{member.name}** ha lasciato ATLAS COMMUNITY\n\n"
+            "📉 Ci dispiace vederti andare via\n"
+            "🔥 Speriamo di rivederti presto"
+        ),
+        color=discord.Color.red()
+    )
 
-        await channel.send(embed=embed)
+    embed.set_thumbnail(url=member.display_avatar.url)
+
+    await channel.send(embed=embed)
 
 # =========================
 # TEST WELCOME
 # =========================
-@bot.tree.command(name="benvenuto", description="Test sistema benvenuto")
+@bot.tree.command(name="benvenuto")
 async def benvenuto(interaction: discord.Interaction):
 
     member = interaction.user
@@ -110,9 +116,7 @@ async def benvenuto(interaction: discord.Interaction):
         title="🎉 TEST WELCOME",
         description=(
             f"👋 Benvenuto {member.mention}\n\n"
-            "Simulazione sistema ATLAS COMMUNITY\n\n"
-            "📜 Regolamento (TEST)\n"
-            "🎫 Ticket system (TEST)"
+            "Simulazione sistema ATLAS"
         ),
         color=discord.Color.green()
     )
@@ -124,7 +128,7 @@ async def benvenuto(interaction: discord.Interaction):
 # =========================
 # TEST GOODBYE
 # =========================
-@bot.tree.command(name="addio", description="Test sistema addio")
+@bot.tree.command(name="addio")
 async def addio(interaction: discord.Interaction):
 
     member = interaction.user
@@ -132,8 +136,7 @@ async def addio(interaction: discord.Interaction):
     embed = discord.Embed(
         title="👋 TEST GOODBYE",
         description=(
-            f"💔 {member.name} ha lasciato il server (TEST)\n\n"
-            "Simulazione sistema uscita"
+            f"💔 {member.name} ha lasciato il server (TEST)"
         ),
         color=discord.Color.red()
     )
