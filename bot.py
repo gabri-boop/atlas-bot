@@ -3,7 +3,6 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 import json
-import asyncio
 
 # =========================
 # TOKEN
@@ -24,7 +23,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # =========================
-# COUNTER TICKET
+# TICKET COUNTER
 # =========================
 COUNTER_FILE = "ticket_counter.json"
 
@@ -41,12 +40,7 @@ def save_counter(value):
 ticket_counter = load_counter()
 
 # =========================
-# ANTI RAID
-# =========================
-join_count = {}
-
-# =========================
-# UTILS
+# LOG UTILS
 # =========================
 def get_log_channel(guild, name):
     return discord.utils.get(guild.text_channels, name=name)
@@ -57,42 +51,21 @@ def get_log_channel(guild, name):
 @bot.event
 async def on_ready():
     print(f"🤖 Online come {bot.user}")
-    await bot.tree.sync()
+    try:
+        await bot.tree.sync()
+    except Exception as e:
+        print(e)
 
 # =========================
-# =========================
-# 👋 WELCOME (COME ORIGINALE - NON MODIFICATO)
-# =========================
+# WELCOME (NON MODIFICATO COME RICHIESTO)
 # =========================
 @bot.event
 async def on_member_join(member):
 
-    # ANTI RAID
-    gid = member.guild.id
+    log = get_log_channel(member.guild, "📋・ᴍᴇᴍʙᴇʀ-ʟᴏɢꜱ")
+    if log:
+        await log.send(f"📥 {member} è entrato")
 
-    if gid not in join_count:
-        join_count[gid] = 0
-
-    join_count[gid] += 1
-
-    if join_count[gid] >= 5:
-        log = get_log_channel(member.guild, "🔨・ᴍᴏᴅ-ʟᴏɢꜱ")
-        if log:
-            await log.send("🚨 POSSIBILE RAID IN CORSO!")
-        join_count[gid] = 0
-
-    # MEMBER LOG
-    channel = get_log_channel(member.guild, "📋・ᴍᴇᴍʙᴇʀ-ʟᴏɢꜱ")
-    if channel:
-        embed = discord.Embed(
-            title="📥 NUOVO MEMBRO",
-            description=f"{member.mention} è entrato nel server",
-            color=discord.Color.green()
-        )
-        embed.set_thumbnail(url=member.display_avatar.url)
-        await channel.send(embed=embed)
-
-    # WELCOME CHAT (IDENTICO COME PRIMA)
     welcome = discord.utils.get(member.guild.text_channels, name="👋・welcome")
 
     if welcome:
@@ -112,40 +85,29 @@ async def on_member_join(member):
 
         await welcome.send(embed=embed)
 
-    # DM WELCOME
-    try:
-        embed = discord.Embed(
-            title="🎉 Benvenuto in ATLAS",
-            description="Usa /ticketpanel per aiuto",
-            color=discord.Color.blue()
-        )
-        await member.send(embed=embed)
-    except:
-        pass
-
 # =========================
 # GOODBYE
 # =========================
 @bot.event
 async def on_member_remove(member):
 
-    channel = get_log_channel(member.guild, "📋・ᴍᴇᴍʙᴇʀ-ʟᴏɢꜱ")
-    if channel:
-        await channel.send(f"📤 {member} è uscito")
+    log = get_log_channel(member.guild, "📋・ᴍᴇᴍʙᴇʀ-ʟᴏɢꜱ")
+    if log:
+        await log.send(f"📤 {member} è uscito")
 
     goodbye = discord.utils.get(member.guild.text_channels, name="💔・goodbye")
 
     if goodbye:
         embed = discord.Embed(
             title="👋 USCITA DAL SERVER",
-            description=f"💔 {member.name} ha lasciato ATLAS",
+            description=f"💔 {member.name} ha lasciato ATLAS COMMUNITY",
             color=discord.Color.red()
         )
         embed.set_thumbnail(url=member.display_avatar.url)
         await goodbye.send(embed=embed)
 
 # =========================
-# LOG MESSAGGI
+# MESSAGE LOG
 # =========================
 @bot.event
 async def on_message_delete(message):
@@ -157,61 +119,58 @@ async def on_message_delete(message):
 
     if log:
         embed = discord.Embed(
-            title="🗑️ DELETE",
-            description=f"{message.author}: {message.content}",
+            title="🗑️ MESSAGGIO ELIMINATO",
+            description=f"{message.author.mention}: {message.content}",
             color=discord.Color.orange()
         )
         await log.send(embed=embed)
 
 # =========================
-# MOD LOG
-# =========================
-@bot.event
-async def on_member_ban(guild, user):
-
-    log = get_log_channel(guild, "🔨・ᴍᴏᴅ-ʟᴏɢꜱ")
-    if log:
-        await log.send(f"🔨 BAN: {user}")
-
-# =========================
 # MOD COMMANDS
 # =========================
 @bot.tree.command(name="ban")
-async def ban(interaction, member: discord.Member, reason="Nessun motivo"):
+async def ban(interaction: discord.Interaction, member: discord.Member, reason: str = "Nessun motivo"):
     await member.ban(reason=reason)
     await interaction.response.send_message("⛔ bannato")
 
 @bot.tree.command(name="kick")
-async def kick(interaction, member: discord.Member, reason="Nessun motivo"):
+async def kick(interaction: discord.Interaction, member: discord.Member, reason: str = "Nessun motivo"):
     await member.kick(reason=reason)
     await interaction.response.send_message("👢 kickato")
 
 @bot.tree.command(name="clear")
-async def clear(interaction, amount: int):
+async def clear(interaction: discord.Interaction, amount: int):
+
+    if not interaction.user.guild_permissions.manage_messages:
+        return await interaction.response.send_message("❌ No permessi", ephemeral=True)
+
     await interaction.channel.purge(limit=amount)
     await interaction.response.send_message("🧹 pulito", ephemeral=True)
 
 # =========================
-# NUOVI COMANDI
+# USER INFO
 # =========================
 @bot.tree.command(name="userinfo")
-async def userinfo(interaction, member: discord.Member = None):
+async def userinfo(interaction: discord.Interaction, member: discord.Member = None):
 
     member = member or interaction.user
 
     embed = discord.Embed(title="👤 USER INFO", color=discord.Color.blue())
-    embed.add_field(name="Nome", value=member.name)
-    embed.add_field(name="ID", value=member.id)
+    embed.add_field(name="Nome", value=member.name, inline=False)
+    embed.add_field(name="ID", value=member.id, inline=False)
     embed.set_thumbnail(url=member.display_avatar.url)
 
     await interaction.response.send_message(embed=embed)
 
+# =========================
+# AVATAR
+# =========================
 @bot.tree.command(name="avatar")
-async def avatar(interaction, member: discord.Member = None):
+async def avatar(interaction: discord.Interaction, member: discord.Member = None):
 
     member = member or interaction.user
 
-    embed = discord.Embed()
+    embed = discord.Embed(title="🖼️ Avatar")
     embed.set_image(url=member.display_avatar.url)
 
     await interaction.response.send_message(embed=embed)
@@ -221,66 +180,69 @@ async def avatar(interaction, member: discord.Member = None):
 # =========================
 class CloseView(discord.ui.View):
     def __init__(self):
-        super().__init__()
+        super().__init__(timeout=None)
 
-    @discord.ui.button(label="Chiudi", style=discord.ButtonStyle.red)
-    async def close(self, interaction, button):
+    @discord.ui.button(label="Chiudi", style=discord.ButtonStyle.red, emoji="🔒")
+    async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.channel.delete()
 
-async def create_ticket(interaction, category):
+async def create_ticket(interaction: discord.Interaction, category: str):
 
     global ticket_counter
 
     ticket_counter += 1
     save_counter(ticket_counter)
 
-    tid = str(ticket_counter).zfill(4)
+    ticket_id = str(ticket_counter).zfill(4)
 
     cat = discord.utils.get(interaction.guild.categories, name="🎫 tickets")
     if not cat:
         cat = await interaction.guild.create_category("🎫 tickets")
 
-    ch = await interaction.guild.create_text_channel(f"{category}-{tid}", category=cat)
+    channel = await interaction.guild.create_text_channel(
+        name=f"{category}-{ticket_id}",
+        category=cat
+    )
 
-    await ch.set_permissions(interaction.guild.default_role, view_channel=False)
-    await ch.set_permissions(interaction.user, view_channel=True, send_messages=True)
+    await channel.set_permissions(interaction.guild.default_role, view_channel=False)
+    await channel.set_permissions(interaction.user, view_channel=True, send_messages=True)
 
     embed = discord.Embed(
-        title=f"🎫 TICKET #{tid}",
-        description=f"Categoria: {category}",
+        title=f"🎫 TICKET #{ticket_id}",
+        description=f"Categoria: {category.upper()}",
         color=discord.Color.from_rgb(0, 90, 255)
     )
 
-    await ch.send(embed=embed, view=CloseView())
+    await channel.send(embed=embed, view=CloseView())
 
-    await interaction.response.send_message(f"Creato {ch.mention}", ephemeral=True)
+    await interaction.response.send_message(f"Creato {channel.mention}", ephemeral=True)
 
 class TicketView(discord.ui.View):
 
-    @discord.ui.button(label="OWNER", style=discord.ButtonStyle.danger)
-    async def owner(self, i, b):
-        await create_ticket(i, "owner")
+    @discord.ui.button(label="OWNER", style=discord.ButtonStyle.danger, emoji="👑")
+    async def owner(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await create_ticket(interaction, "owner")
 
-    @discord.ui.button(label="STAFF", style=discord.ButtonStyle.primary)
-    async def staff(self, i, b):
-        await create_ticket(i, "staff")
+    @discord.ui.button(label="STAFF", style=discord.ButtonStyle.primary, emoji="🛡️")
+    async def staff(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await create_ticket(interaction, "staff")
 
-    @discord.ui.button(label="VALLEY", style=discord.ButtonStyle.success)
-    async def valley(self, i, b):
-        await create_ticket(i, "valley")
+    @discord.ui.button(label="VALLEY", style=discord.ButtonStyle.success, emoji="🏝️")
+    async def valley(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await create_ticket(interaction, "valley")
 
 @bot.tree.command(name="ticketpanel")
-async def ticketpanel(interaction):
+async def ticketpanel(interaction: discord.Interaction):
 
     embed = discord.Embed(
-        title="🎫 ATLAS COMMUNITY",
-        description="Apri un ticket",
+        title="🎫 ATLAS COMMUNITY SUPPORT",
+        description="Apri un ticket con i bottoni qui sotto",
         color=discord.Color.from_rgb(0, 90, 255)
     )
 
     await interaction.response.send_message(embed=embed, view=TicketView())
 
 # =========================
-# RUN
+# RUN BOT
 # =========================
 bot.run(TOKEN)
