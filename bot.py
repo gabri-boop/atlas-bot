@@ -71,11 +71,14 @@ async def on_member_join(member):
             "🎫 Usa il ticket system per supporto\n\n"
             "🔥 Buona permanenza!"
         ),
-        color=discord.Color.from_rgb(20, 30, 55)
+        color=discord.Color.from_rgb(0, 90, 200)
     )
 
     embed.set_thumbnail(url=member.display_avatar.url)
-    embed.set_image(url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png")
+
+    embed.set_image(
+        url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png"
+    )
 
     await channel.send(content=f"👋 {member.mention}", embed=embed)
 
@@ -94,10 +97,9 @@ async def on_member_remove(member):
         title="👋 USCITA DAL SERVER",
         description=(
             f"💔 **{member.name}** ha lasciato ATLAS COMMUNITY\n\n"
-            "📉 Ci dispiace vederti andare via\n"
-            "🔥 Speriamo di rivederti presto"
+            "📉 Speriamo di rivederti presto"
         ),
-        color=discord.Color.red()
+        color=discord.Color.from_rgb(10, 30, 80)
     )
 
     embed.set_thumbnail(url=member.display_avatar.url)
@@ -114,11 +116,8 @@ async def benvenuto(interaction: discord.Interaction):
 
     embed = discord.Embed(
         title="🎉 TEST WELCOME",
-        description=(
-            f"👋 Benvenuto {member.mention}\n\n"
-            "Simulazione sistema ATLAS"
-        ),
-        color=discord.Color.green()
+        description=f"👋 Benvenuto {member.mention}\nSimulazione ATLAS SYSTEM",
+        color=discord.Color.from_rgb(0, 90, 200)
     )
 
     embed.set_thumbnail(url=member.display_avatar.url)
@@ -135,10 +134,8 @@ async def addio(interaction: discord.Interaction):
 
     embed = discord.Embed(
         title="👋 TEST GOODBYE",
-        description=(
-            f"💔 {member.name} ha lasciato il server (TEST)"
-        ),
-        color=discord.Color.red()
+        description=f"💔 {member.name} ha lasciato il server (TEST)",
+        color=discord.Color.from_rgb(10, 30, 80)
     )
 
     embed.set_thumbnail(url=member.display_avatar.url)
@@ -218,7 +215,7 @@ async def create_ticket(interaction: discord.Interaction, category: str):
     embed = discord.Embed(
         title=f"🎫 ATLAS COMMUNITY TICKET #{ticket_id}",
         description=f"Categoria: **{category.upper()}**\nAttendi lo staff.",
-        color=discord.Color.from_rgb(20, 30, 55)
+        color=discord.Color.from_rgb(0, 90, 200)
     )
 
     await channel.send(embed=embed, view=CloseView())
@@ -260,11 +257,12 @@ async def ticketpanel(interaction: discord.Interaction):
 
     embed = discord.Embed(
         title="🎫 SISTEMA TICKET — ATLAS COMMUNITY",
-        description=(
-            "🎫 Apri un ticket se hai bisogno di aiuto 💬🔥\n\n"
-            "Seleziona una categoria."
-        ),
-        color=discord.Color.from_rgb(15, 18, 25)
+        description="🎫 Apri un ticket se hai bisogno di aiuto 💬🔥",
+        color=discord.Color.from_rgb(0, 90, 200)
+    )
+
+    embed.set_image(
+        url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png"
     )
 
     await interaction.response.send_message(embed=embed, view=TicketView())
