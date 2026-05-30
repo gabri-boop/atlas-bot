@@ -40,6 +40,12 @@ def save_counter(value):
 ticket_counter = load_counter()
 
 # =========================
+# UTILS LOG CHANNEL
+# =========================
+def get_log_channel(guild, name):
+    return discord.utils.get(guild.text_channels, name=name)
+
+# =========================
 # READY
 # =========================
 @bot.event
@@ -52,93 +58,167 @@ async def on_ready():
         print(e)
 
 # =========================
-# WELCOME SYSTEM
+# WELCOME
 # =========================
 @bot.event
 async def on_member_join(member):
 
-    channel = discord.utils.get(member.guild.text_channels, name="👋・welcome")
+    # MEMBER LOG
+    channel = get_log_channel(member.guild, "📋・ᴍᴇᴍʙᴇʀ-ʟᴏɢꜱ")
+    if channel:
+        embed = discord.Embed(
+            title="📥 NUOVO MEMBRO",
+            description=f"{member.mention} è entrato nel server",
+            color=discord.Color.green()
+        )
+        embed.set_thumbnail(url=member.display_avatar.url)
+        await channel.send(embed=embed)
 
-    if not channel:
-        return
+    # WELCOME CHAT
+    welcome = discord.utils.get(member.guild.text_channels, name="👋・welcome")
 
-    embed = discord.Embed(
-        title="🎉 BENVENUTO IN ATLAS COMMUNITY",
-        description=(
-            f"👋 Ciao {member.mention}\n\n"
-            "Sei entrato nella community ufficiale ATLAS.\n\n"
-            "📜 Leggi il regolamento\n"
-            "🎫 Usa il ticket system per supporto\n\n"
-            "🔥 Buona permanenza!"
-        ),
-        color=discord.Color.from_rgb(0, 90, 200)
-    )
+    if welcome:
+        embed = discord.Embed(
+            title="🎉 BENVENUTO IN ATLAS COMMUNITY",
+            description=(
+                f"👋 Ciao {member.mention}\n\n"
+                "📜 Leggi il regolamento\n"
+                "🎫 Usa il ticket system\n\n"
+                "🔥 Buona permanenza!"
+            ),
+            color=discord.Color.from_rgb(0, 90, 200)
+        )
 
-    embed.set_thumbnail(url=member.display_avatar.url)
+        embed.set_thumbnail(url=member.display_avatar.url)
+        embed.set_image(url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png")
 
-    embed.set_image(
-        url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png"
-    )
-
-    await channel.send(content=f"👋 {member.mention}", embed=embed)
+        await welcome.send(embed=embed)
 
 # =========================
-# GOODBYE SYSTEM
+# GOODBYE
 # =========================
 @bot.event
 async def on_member_remove(member):
 
-    channel = discord.utils.get(member.guild.text_channels, name="💔・goodbye")
+    channel = get_log_channel(member.guild, "📋・ᴍᴇᴍʙᴇʀ-ʟᴏɢꜱ")
 
-    if not channel:
-        return
+    if channel:
+        embed = discord.Embed(
+            title="📤 MEMBRO USCITO",
+            description=f"**{member}** ha lasciato il server",
+            color=discord.Color.red()
+        )
+        await channel.send(embed=embed)
 
-    embed = discord.Embed(
-        title="👋 USCITA DAL SERVER",
-        description=(
-            f"💔 **{member.name}** ha lasciato ATLAS COMMUNITY\n\n"
-            "📉 Speriamo di rivederti presto"
-        ),
-        color=discord.Color.from_rgb(10, 30, 80)
-    )
+    goodbye = discord.utils.get(member.guild.text_channels, name="💔・goodbye")
 
-    embed.set_thumbnail(url=member.display_avatar.url)
-
-    await channel.send(embed=embed)
+    if goodbye:
+        embed = discord.Embed(
+            title="👋 USCITA DAL SERVER",
+            description=f"💔 {member.name} ha lasciato ATLAS COMMUNITY",
+            color=discord.Color.from_rgb(10, 30, 80)
+        )
+        embed.set_thumbnail(url=member.display_avatar.url)
+        await goodbye.send(embed=embed)
 
 # =========================
-# TEST WELCOME
+# MESSAGE LOGS
+# =========================
+@bot.event
+async def on_message_delete(message):
+
+    if not message.guild or message.author.bot:
+        return
+
+    channel = get_log_channel(message.guild, "📝・ᴍᴇꜱꜱᴀɢᴇ-ʟᴏɢꜱ")
+
+    if channel:
+        embed = discord.Embed(
+            title="🗑️ MESSAGGIO ELIMINATO",
+            color=discord.Color.orange()
+        )
+        embed.add_field(name="Utente", value=message.author.mention, inline=False)
+        embed.add_field(name="Canale", value=message.channel.mention, inline=False)
+        embed.add_field(name="Contenuto", value=message.content or "vuoto", inline=False)
+
+        await channel.send(embed=embed)
+
+
+@bot.event
+async def on_message_edit(before, after):
+
+    if not before.guild or before.author.bot:
+        return
+
+    if before.content == after.content:
+        return
+
+    channel = get_log_channel(before.guild, "📝・ᴍᴇꜱꜱᴀɢᴇ-ʟᴏɢꜱ")
+
+    if channel:
+        embed = discord.Embed(
+            title="✏️ MESSAGGIO MODIFICATO",
+            color=discord.Color.blue()
+        )
+        embed.add_field(name="Utente", value=before.author.mention, inline=False)
+        embed.add_field(name="Prima", value=before.content[:1024] or "vuoto", inline=False)
+        embed.add_field(name="Dopo", value=after.content[:1024] or "vuoto", inline=False)
+
+        await channel.send(embed=embed)
+
+# =========================
+# MOD LOGS
+# =========================
+@bot.event
+async def on_member_ban(guild, user):
+
+    channel = get_log_channel(guild, "🔨・ᴍᴏᴅ-ʟᴏɢꜱ")
+
+    if channel:
+        embed = discord.Embed(
+            title="🔨 BAN",
+            description=f"{user.mention} bannato",
+            color=discord.Color.red()
+        )
+        await channel.send(embed=embed)
+
+
+@bot.event
+async def on_member_unban(guild, user):
+
+    channel = get_log_channel(guild, "🔨・ᴍᴏᴅ-ʟᴏɢꜱ")
+
+    if channel:
+        embed = discord.Embed(
+            title="🔓 UNBAN",
+            description=f"{user.mention} sbannato",
+            color=discord.Color.green()
+        )
+        await channel.send(embed=embed)
+
+# =========================
+# TEST COMMANDS
 # =========================
 @bot.tree.command(name="benvenuto")
 async def benvenuto(interaction: discord.Interaction):
 
-    member = interaction.user
-
     embed = discord.Embed(
         title="🎉 TEST WELCOME",
-        description=f"👋 Benvenuto {member.mention}\nSimulazione ATLAS SYSTEM",
+        description=f"👋 {interaction.user.mention}",
         color=discord.Color.from_rgb(0, 90, 200)
     )
 
-    embed.set_thumbnail(url=member.display_avatar.url)
-
     await interaction.response.send_message(embed=embed)
 
-# =========================
-# TEST GOODBYE
-# =========================
+
 @bot.tree.command(name="addio")
 async def addio(interaction: discord.Interaction):
 
-    member = interaction.user
-
     embed = discord.Embed(
         title="👋 TEST GOODBYE",
-        description=f"💔 {member.name} ha lasciato il server (TEST)",
-        color=discord.Color.from_rgb(10, 30, 80)
+        description=f"💔 {interaction.user.name}",
+        color=discord.Color.red()
     )
-
-    embed.set_thumbnail(url=member.display_avatar.url)
 
     await interaction.response.send_message(embed=embed)
 
@@ -163,7 +243,7 @@ async def kick(interaction: discord.Interaction, member: discord.Member, reason:
         return await interaction.response.send_message("❌ No permessi", ephemeral=True)
 
     await member.kick(reason=reason)
-    await interaction.response.send_message(f"👢 {member} kickato")
+    await interaction.response.send_message(f"👢 kickato")
 
 @bot.tree.command(name="clear")
 async def clear(interaction: discord.Interaction, amount: int):
@@ -171,24 +251,20 @@ async def clear(interaction: discord.Interaction, amount: int):
         return await interaction.response.send_message("❌ No permessi", ephemeral=True)
 
     await interaction.channel.purge(limit=amount)
-    await interaction.response.send_message(f"🧹 Eliminati {amount} messaggi", ephemeral=True)
+    await interaction.response.send_message(f"🧹 eliminati {amount}")
 
 # =========================
-# CLOSE TICKET
+# TICKET SYSTEM
 # =========================
 class CloseView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
     @discord.ui.button(label="Chiudi Ticket", style=discord.ButtonStyle.red, emoji="🔒")
-    async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("🔒 Chiusura ticket...")
+    async def close(self, interaction, button):
         await interaction.channel.delete()
 
-# =========================
-# CREATE TICKET
-# =========================
-async def create_ticket(interaction: discord.Interaction, category: str):
+async def create_ticket(interaction, category):
 
     global ticket_counter
 
@@ -213,8 +289,8 @@ async def create_ticket(interaction: discord.Interaction, category: str):
     await channel.set_permissions(user, read_messages=True, send_messages=True)
 
     embed = discord.Embed(
-        title=f"🎫 ATLAS COMMUNITY TICKET #{ticket_id}",
-        description=f"Categoria: **{category.upper()}**\nAttendi lo staff.",
+        title=f"🎫 ATLAS TICKET #{ticket_id}",
+        description=f"Categoria: {category.upper()}",
         color=discord.Color.from_rgb(0, 90, 200)
     )
 
@@ -222,48 +298,38 @@ async def create_ticket(interaction: discord.Interaction, category: str):
 
     await interaction.response.send_message(f"Ticket creato: {channel.mention}", ephemeral=True)
 
-# =========================
-# TICKET PANEL
-# =========================
 class TicketView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
 
     @discord.ui.button(label="OWNER", style=discord.ButtonStyle.danger, emoji="👑")
-    async def owner(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def owner(self, interaction, button):
         await create_ticket(interaction, "owner")
 
     @discord.ui.button(label="STAFF", style=discord.ButtonStyle.primary, emoji="🛡️")
-    async def staff(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def staff(self, interaction, button):
         await create_ticket(interaction, "staff")
 
     @discord.ui.button(label="VALLEY", style=discord.ButtonStyle.success, emoji="🏝️")
-    async def valley(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def valley(self, interaction, button):
         await create_ticket(interaction, "valley")
 
     @discord.ui.button(label="SUPPORTO", style=discord.ButtonStyle.secondary, emoji="🎮")
-    async def support(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def supporto(self, interaction, button):
         await create_ticket(interaction, "supporto")
 
     @discord.ui.button(label="BUG", style=discord.ButtonStyle.secondary, emoji="🐛")
-    async def bug(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def bug(self, interaction, button):
         await create_ticket(interaction, "bug")
 
-# =========================
-# PANEL COMMAND
-# =========================
 @bot.tree.command(name="ticketpanel")
 async def ticketpanel(interaction: discord.Interaction):
 
     embed = discord.Embed(
-        title="🎫 SISTEMA TICKET — ATLAS COMMUNITY",
-        description="🎫 Apri un ticket se hai bisogno di aiuto 💬🔥",
+        title="🎫 ATLAS COMMUNITY",
+        description="Apri un ticket 💬🔥",
         color=discord.Color.from_rgb(0, 90, 200)
     )
 
-    embed.set_image(
-        url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png"
-    )
+    embed.set_image(url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png")
 
     await interaction.response.send_message(embed=embed, view=TicketView())
 
