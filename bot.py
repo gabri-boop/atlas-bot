@@ -321,7 +321,71 @@ async def ticketpanel(interaction: discord.Interaction):
 
     embed.set_image(url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png")
 
-    await interaction.response.send_message(embed=embed, view=TicketView())
+    await interaction.response.send_message(embed=embed, view=TicketView()) 
+    
+# =========================
+# VERIFY SYSTEM
+# =========================
+
+class VerifyView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(
+        label="Verificami",
+        emoji="✅",
+        style=discord.ButtonStyle.success
+    )
+    async def verify(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        role = discord.utils.get(
+            interaction.guild.roles,
+            name="Membro"
+        )
+
+        if role is None:
+            return await interaction.response.send_message(
+                "❌ Ruolo 'Membro' non trovato.",
+                ephemeral=True
+            )
+
+        if role in interaction.user.roles:
+            return await interaction.response.send_message(
+                "⚠️ Sei già verificato.",
+                ephemeral=True
+            )
+
+        await interaction.user.add_roles(role)
+
+        await interaction.response.send_message(
+            "✅ Verifica completata! Benvenuto in ATLAS COMMUNITY.",
+            ephemeral=True
+        )
+
+
+@bot.tree.command(name="verifypanel")
+async def verifypanel(interaction: discord.Interaction):
+
+    embed = discord.Embed(
+        title="🔒 VERIFICA ATLAS COMMUNITY",
+        description=(
+            "👋 Benvenuto!\n\n"
+            "Per accedere al server devi verificarti.\n\n"
+            "✅ Premi il bottone qui sotto\n"
+            "🎫 Accesso completo ai canali\n\n"
+            "⚠️ Sistema automatico"
+        ),
+        color=discord.Color.from_rgb(0, 90, 200)
+    )
+
+    embed.set_image(
+        url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png"
+    )
+
+    await interaction.response.send_message(
+        embed=embed,
+        view=VerifyView()
+    )
 
 # =========================
 # RUN
