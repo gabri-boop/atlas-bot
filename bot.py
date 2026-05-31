@@ -534,11 +534,11 @@ async def create_ticket(interaction, category):
 
 
 
-    cat = discord.utils.get(guild.categories, name="🎫 tickets")
+    cat = discord.utils.get(guild.categories, name="🎫 𝗧𝗜𝗖𝗞𝗘𝗧𝗦")
 
     if not cat:
 
-        cat = await guild.create_category("🎫 tickets")
+        cat = await guild.create_category("🎫 𝗧𝗜𝗖𝗞𝗘𝗧𝗦")
 
 
 
