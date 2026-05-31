@@ -653,7 +653,6 @@ async def ticketpanel(interaction: discord.Interaction):
 # VERIFY SYSTEM
 
 # =========================
-
 class VerifyView(discord.ui.View):
 
     def __init__(self):
@@ -699,23 +698,27 @@ async def verifypanel(interaction: discord.Interaction):
         description=(
             "👋 Benvenuto!\n\n"
             "Per accedere al server devi verificarti.\n\n"
-            "Premi il bottone qui sotto 👇\n"
-            "🎫 Accesso completo ai canali\n\n"
+            "Premi il bottone qui sotto 👇\n\n"
+            "🎫 Accesso completo ai canali\n"
             "⚠️ Sistema automatico"
         ),
         color=discord.Color.from_rgb(0, 90, 200)
+    )
+
+    # 🖼 BANNER
+    embed.set_image(
+        url="https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png"
     )
 
     await interaction.response.send_message(
         embed=embed,
         view=VerifyView()
     )
-
 # =========================
 # ANNUNCI SYSTEM
 # =========================
 
-@bot.tree.command(name="annunci", description="Invia un annuncio stile webhook con banner e logo")
+@bot.tree.command(name="annunci", description="Invia un annuncio stile webhook con banner")
 async def annunci(
     interaction: discord.Interaction,
     titolo: str,
@@ -728,7 +731,7 @@ async def annunci(
             ephemeral=True
         )
 
-    logo_url = "https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png"
+    banner_url = "https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png"
 
     embed = discord.Embed(
         title=f"📢 {titolo}",
@@ -741,8 +744,9 @@ async def annunci(
         icon_url=interaction.user.display_avatar.url
     )
 
-    embed.set_image(url=logo_url)
-    embed.set_thumbnail(url=logo_url)
+    # 🖼 solo banner (NO thumbnail)
+    embed.set_image(url=banner_url)
+
     embed.set_footer(text="ATLAS ANNOUNCEMENTS SYSTEM")
 
     await interaction.channel.send(embed=embed)
@@ -751,7 +755,6 @@ async def annunci(
         "✅ Annuncio inviato con successo!",
         ephemeral=True
     )
-
 
 
  # =========================
