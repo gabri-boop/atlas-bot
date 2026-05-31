@@ -148,7 +148,7 @@ async def on_member_join(member):
 
 
 
-    welcome = discord.utils.get(member.guild.text_channels, name="👋・welcome")
+    welcome = discord.utils.get(member.guild.text_channels, name="👋・ᴡᴇʟᴄᴏᴍᴇ")
 
 
 
