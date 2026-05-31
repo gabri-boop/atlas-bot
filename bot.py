@@ -755,7 +755,7 @@ async def verifypanel(interaction: discord.Interaction):
         color=discord.Color.from_rgb(0, 90, 200)
 
     )
-    @bot.tree.command(name="annunci", description="Invia un annuncio stile webhook con banner e logo")
+@bot.tree.command(name="annunci", description="Invia un annuncio stile webhook con banner e logo")
 async def annunci(
     interaction: discord.Interaction,
     titolo: str,
@@ -769,7 +769,6 @@ async def annunci(
         )
 
     logo_url = "https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png"
-    banner_url = logo_url
 
     embed = discord.Embed(
         title=f"📢 {titolo}",
@@ -782,7 +781,7 @@ async def annunci(
         icon_url=interaction.user.display_avatar.url
     )
 
-    embed.set_image(url=banner_url)
+    embed.set_image(url=logo_url)
     embed.set_thumbnail(url=logo_url)
     embed.set_footer(text="ATLAS ANNOUNCEMENTS SYSTEM")
 
@@ -792,7 +791,6 @@ async def annunci(
         "✅ Annuncio inviato con successo!",
         ephemeral=True
     )
-
 
 
 
