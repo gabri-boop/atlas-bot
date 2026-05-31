@@ -212,7 +212,7 @@ async def on_member_remove(member):
 
 
 
-    goodbye = discord.utils.get(member.guild.text_channels, name="💔・goodbye")
+    goodbye = discord.utils.get(member.guild.text_channels, name="💔・ɢᴏᴏᴅʙʏᴇ")
 
 
 
