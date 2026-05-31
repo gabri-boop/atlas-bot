@@ -654,107 +654,65 @@ async def ticketpanel(interaction: discord.Interaction):
 
 # =========================
 
-
-
 class VerifyView(discord.ui.View):
 
     def __init__(self):
-
         super().__init__(timeout=None)
 
-
-
     @discord.ui.button(
-
         label="Verificami",
-
         emoji="✅",
-
         style=discord.ButtonStyle.success
-
     )
-
     async def verify(self, interaction: discord.Interaction, button: discord.ui.Button):
 
-
-
         role = discord.utils.get(
-
             interaction.guild.roles,
-
             name="Membro"
-
         )
 
-
-
         if role is None:
-
             return await interaction.response.send_message(
-
                 "❌ Ruolo 'Membro' non trovato.",
-
                 ephemeral=True
-
             )
-
-
 
         if role in interaction.user.roles:
-
             return await interaction.response.send_message(
-
                 "⚠️ Sei già verificato.",
-
                 ephemeral=True
-
             )
-
-
 
         await interaction.user.add_roles(role)
 
-
-
         await interaction.response.send_message(
-
             "✅ Verifica completata! Benvenuto in ATLAS COMMUNITY.",
-
             ephemeral=True
-
         )
-
-
-
 
 
 @bot.tree.command(name="verifypanel")
-
 async def verifypanel(interaction: discord.Interaction):
 
-
-
     embed = discord.Embed(
-
         title="🔒 VERIFICA ATLAS COMMUNITY",
-
         description=(
-
             "👋 Benvenuto!\n\n"
-
             "Per accedere al server devi verificarti.\n\n"
-
-            "✅ Premi il bottone qui sotto\n"
-
+            "Premi il bottone qui sotto 👇\n"
             "🎫 Accesso completo ai canali\n\n"
-
             "⚠️ Sistema automatico"
+        ),
+        color=discord.Color.from_rgb(0, 90, 200)
+    )
 
-        )
-            )
+    await interaction.response.send_message(
+        embed=embed,
+        view=VerifyView()
+    )
 
 # =========================
-# ANNUNCI COMMAND
+# ANNUNCI SYSTEM
 # =========================
 
 @bot.tree.command(name="annunci", description="Invia un annuncio stile webhook con banner e logo")
