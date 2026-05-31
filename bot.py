@@ -773,6 +773,51 @@ async def verifypanel(interaction: discord.Interaction):
         view=VerifyView()
 
     )
+    @bot.tree.command(name="annunci", description="Invia un annuncio stile webhook con banner e logo")
+async def annunci(
+    interaction: discord.Interaction,
+    titolo: str,
+    messaggio: str
+):
+
+    if not interaction.user.guild_permissions.administrator:
+        return await interaction.response.send_message(
+            "❌ Non hai i permessi per usare questo comando.",
+            ephemeral=True
+        )
+
+    # 🔥 LOGO (puoi cambiare URL con il tuo)
+    logo_url = "https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png"
+
+    # 🖼 BANNER (stesso o diverso dal logo)
+    banner_url = "https://cdn.discordapp.com/attachments/1482844068009738434/1510275949847908462/ChatGPT_Image_30_mag_2026_13_21_58.png"
+
+    embed = discord.Embed(
+        title=f"📢 {titolo}",
+        description=messaggio,
+        color=discord.Color.from_rgb(0, 90, 200)
+    )
+
+    # 👤 stile webhook
+    embed.set_author(
+        name=f"{interaction.user.name}",
+        icon_url=interaction.user.display_avatar.url
+    )
+
+    # 🖼 banner grande
+    embed.set_image(url=banner_url)
+
+    # 🧷 logo piccolo
+    embed.set_thumbnail(url=logo_url)
+
+    embed.set_footer(text="ATLAS ANNOUNCEMENTS SYSTEM")
+
+    await interaction.channel.send(embed=embed)
+
+    await interaction.response.send_message(
+        "✅ Annuncio inviato con successo!",
+        ephemeral=True
+    )
 
 
 
