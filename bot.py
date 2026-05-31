@@ -750,11 +750,13 @@ async def verifypanel(interaction: discord.Interaction):
 
             "⚠️ Sistema automatico"
 
-        ),
+        )
+            )
 
-        color=discord.Color.from_rgb(0, 90, 200)
+# =========================
+# ANNUNCI COMMAND
+# =========================
 
-    )
 @bot.tree.command(name="annunci", description="Invia un annuncio stile webhook con banner e logo")
 async def annunci(
     interaction: discord.Interaction,
@@ -794,7 +796,7 @@ async def annunci(
 
 
 
-  # =========================
+ # =========================
 
 # RUN
 
