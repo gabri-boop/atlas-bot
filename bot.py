@@ -49,7 +49,7 @@ def get_log_channel(guild, name):
 # READY
 # =========================
 @bot.event
-async def on_ready(bot.loop.create_task(update_server_status())):
+async def on_ready():
     print(f"🤖 Online come {bot.user}")
     try:
         synced = await bot.tree.sync()
@@ -386,45 +386,8 @@ async def verifypanel(interaction: discord.Interaction):
         embed=embed,
         view=VerifyView()
     )
-    async def update_server_status():
-
-    await bot.wait_until_ready()
-
-    while not bot.is_closed():
-
-        for guild in bot.guilds:
-
-            channel = discord.utils.get(guild.text_channels, name="📊・ꜱᴇʀᴠᴇʀ-ꜱᴛᴀᴛᴜꜱ")
-
-            if not channel:
-                continue
-
-            total_members = guild.member_count
-
-            online_members = len([
-                m for m in guild.members
-                if str(m.status) != "offline" and not m.bot
-            ])
-
-            boosters = guild.premium_subscription_count
-
-            embed = discord.Embed(
-                title="📊 SERVER STATUS LIVE",
-                color=discord.Color.from_rgb(0, 90, 200)
-            )
-
-            embed.add_field(name="👥 Membri Totali", value=str(total_members), inline=True)
-            embed.add_field(name="🟢 Online", value=str(online_members), inline=True)
-            embed.add_field(name="🚀 Boost", value=str(boosters), inline=True)
-
-            embed.set_footer(text="Aggiornamento automatico ogni 60s")
-
-            await channel.purge(limit=1)
-            await channel.send(embed=embed)
-
-        await asyncio.sleep(60)
 
 # =========================
 # RUN
 # =========================
-bot.run(TOKEN)
+bot.run(TOKEN) sistema tu
