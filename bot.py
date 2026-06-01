@@ -17,6 +17,7 @@ if not TOKEN:
 # =========================
 intents = discord.Intents.default()
 intents.members = True
+intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
@@ -24,7 +25,8 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 # CONFIG
 # =========================
 BANNER_URL = "https://cdn.discordapp.com/attachments/1482844068009738434/1511074300755574975/ChatGPT_Image_1_giu_2026_20_28_18.png"
-STAFF_ROLE_NAME = "Staff"
+
+STAFF_ROLE_NAME = "🎫 Support"
 TICKET_CATEGORY = "🎫 TICKETS"
 
 # =========================
@@ -32,51 +34,38 @@ TICKET_CATEGORY = "🎫 TICKETS"
 # =========================
 @bot.event
 async def on_ready():
-    print(f"🤖 UNITY BOT ONLINE ({bot.user})")
+    print(f"🤖 UNITY ONLINE ({bot.user})")
     await bot.tree.sync()
 
 # =========================
-# VERIFY SYSTEM (RED)
+# VERIFY SYSTEM
 # =========================
 class VerifyView(discord.ui.View):
 
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="Verificami", emoji="🔴", style=discord.ButtonStyle.danger)
+    @discord.ui.button(label="Verifica", emoji="🔐", style=discord.ButtonStyle.danger)
     async def verify(self, interaction: discord.Interaction, button: discord.ui.Button):
 
         role = discord.utils.get(interaction.guild.roles, name="Membro")
 
-        if role is None:
-            return await interaction.response.send_message(
-                "❌ Ruolo 'Membro' non trovato.",
-                ephemeral=True
-            )
+        if not role:
+            return await interaction.response.send_message("❌ Ruolo Membro non trovato", ephemeral=True)
 
         if role in interaction.user.roles:
-            return await interaction.response.send_message(
-                "⚠️ Sei già verificato.",
-                ephemeral=True
-            )
+            return await interaction.response.send_message("⚠️ Già verificato", ephemeral=True)
 
         await interaction.user.add_roles(role)
 
-        await interaction.response.send_message(
-            "🔴 Verifica completata! Benvenuto in UNITY.",
-            ephemeral=True
-        )
+        await interaction.response.send_message("🔐 Verifica completata", ephemeral=True)
 
 @bot.tree.command(name="verifypanel")
 async def verifypanel(interaction: discord.Interaction):
 
     embed = discord.Embed(
-        title="🔴 VERIFICA UNITY",
-        description=(
-            "👋 Benvenuto!\n\n"
-            "Premi il bottone per verificarti\n\n"
-            "🔴 Accesso ai canali"
-        ),
+        title="🔐 UNITY VERIFICA",
+        description="Premi il bottone per verificarti",
         color=discord.Color.red()
     )
 
@@ -85,16 +74,13 @@ async def verifypanel(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed, view=VerifyView())
 
 # =========================
-# ANNUNCI (RED)
+# ANNUNCI
 # =========================
 @bot.tree.command(name="annunci")
 async def annunci(interaction: discord.Interaction, titolo: str, messaggio: str):
 
     if not interaction.user.guild_permissions.administrator:
-        return await interaction.response.send_message(
-            "❌ No permessi",
-            ephemeral=True
-        )
+        return await interaction.response.send_message("❌ No permessi", ephemeral=True)
 
     embed = discord.Embed(
         title=f"🔴 {titolo}",
@@ -106,53 +92,50 @@ async def annunci(interaction: discord.Interaction, titolo: str, messaggio: str)
 
     await interaction.channel.send(embed=embed)
 
-    await interaction.response.send_message(
-        "🔴 Annuncio inviato",
-        ephemeral=True
-    )
+    await interaction.response.send_message("🔴 Inviato", ephemeral=True)
 
 # =========================
-# TICKET SYSTEM (ADVANCED RED)
+# TICKET SYSTEM
 # =========================
-class TicketControlView(discord.ui.View):
+class TicketControl(discord.ui.View):
 
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="Claim", style=discord.ButtonStyle.success, emoji="👑")
+    @discord.ui.button(label="Claim", emoji="👑", style=discord.ButtonStyle.success)
     async def claim(self, interaction: discord.Interaction, button: discord.ui.Button):
 
         staff_role = discord.utils.get(interaction.guild.roles, name=STAFF_ROLE_NAME)
 
         if staff_role not in interaction.user.roles:
             return await interaction.response.send_message(
-                "❌ Solo staff",
+                "❌ Solo 🎫 Support può fare claim",
                 ephemeral=True
             )
 
         await interaction.channel.send(f"👑 Ticket preso da {interaction.user.mention}")
+
         await interaction.response.send_message("🔴 Claim effettuato", ephemeral=True)
 
-    @discord.ui.button(label="Chiudi", style=discord.ButtonStyle.danger, emoji="🔒")
+    @discord.ui.button(label="Chiudi", emoji="🔒", style=discord.ButtonStyle.danger)
     async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
 
         await interaction.response.send_message("🔴 Ticket chiuso", ephemeral=True)
         await interaction.channel.delete()
 
-
-class TicketOpenView(discord.ui.View):
+class TicketOpen(discord.ui.View):
 
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="Apri Ticket", style=discord.ButtonStyle.danger, emoji="🎫")
+    @discord.ui.button(label="Apri Ticket", emoji="🎫", style=discord.ButtonStyle.danger)
     async def open(self, interaction: discord.Interaction, button: discord.ui.Button):
 
         guild = interaction.guild
         user = interaction.user
 
         category = discord.utils.get(guild.categories, name=TICKET_CATEGORY)
-        if category is None:
+        if not category:
             category = await guild.create_category(TICKET_CATEGORY)
 
         channel = await guild.create_text_channel(
@@ -174,10 +157,10 @@ class TicketOpenView(discord.ui.View):
             color=discord.Color.red()
         )
 
-        await channel.send(embed=embed, view=TicketControlView())
+        await channel.send(embed=embed, view=TicketControl())
 
         await interaction.response.send_message(
-            f"🔴 Ticket creato: {channel.mention}",
+            f"🎫 Ticket creato: {channel.mention}",
             ephemeral=True
         )
 
@@ -192,7 +175,7 @@ async def ticketpanel(interaction: discord.Interaction):
 
     embed.set_image(url=BANNER_URL)
 
-    await interaction.response.send_message(embed=embed, view=TicketOpenView())
+    await interaction.response.send_message(embed=embed, view=TicketOpen())
 
 # =========================
 # RUN
