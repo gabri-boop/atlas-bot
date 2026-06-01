@@ -11,6 +11,12 @@ import time
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
+if not TOKEN:
+    raise ValueError("DISCORD_TOKEN mancante")
+
+# =========================
+# INTENTS
+# =========================
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
@@ -44,6 +50,14 @@ def save_warns(data):
         json.dump(data, f, indent=4)
 
 # =========================
+# LOG SYSTEM FIXED
+# =========================
+async def log(guild, text):
+    channel = discord.utils.get(guild.text_channels, name="📋・logs")
+    if channel:
+        await channel.send(text)
+
+# =========================
 # READY
 # =========================
 @bot.event
@@ -52,15 +66,7 @@ async def on_ready():
     await bot.tree.sync()
 
 # =========================
-# LOGS BASE
-# =========================
-def log(guild, text):
-    channel = discord.utils.get(guild.text_channels, name="📋・logs")
-    if channel:
-        return channel.send(text)
-
-# =========================
-# WELCOME / GOODBYE
+# JOIN / LEAVE (FIXED)
 # =========================
 @bot.event
 async def on_member_join(member):
@@ -89,12 +95,12 @@ async def on_member_remove(member):
     await log(member.guild, f"🔴 LEAVE {member}")
 
 # =========================
-# VERIFY SYSTEM
+# VERIFY
 # =========================
 class VerifyView(discord.ui.View):
 
     @discord.ui.button(label="Verifica", emoji="🔐", style=discord.ButtonStyle.danger)
-    async def verify(self, interaction, button):
+    async def verify(self, interaction: discord.Interaction, button: discord.ui.Button):
 
         role = discord.utils.get(interaction.guild.roles, name="Membro")
 
@@ -106,7 +112,7 @@ class VerifyView(discord.ui.View):
         await interaction.response.send_message("🔐 verificato", ephemeral=True)
 
 @bot.tree.command(name="verifypanel")
-async def verifypanel(interaction):
+async def verifypanel(interaction: discord.Interaction):
 
     embed = discord.Embed(
         title="🔐 UNITY VERIFY",
@@ -121,7 +127,7 @@ async def verifypanel(interaction):
 # ANNUNCI
 # =========================
 @bot.tree.command(name="annunci")
-async def annunci(interaction, titolo: str, messaggio: str):
+async def annunci(interaction: discord.Interaction, titolo: str, messaggio: str):
 
     if not interaction.user.guild_permissions.administrator:
         return await interaction.response.send_message("❌ no permessi", ephemeral=True)
@@ -142,17 +148,17 @@ async def annunci(interaction, titolo: str, messaggio: str):
 # MODERAZIONE
 # =========================
 @bot.tree.command(name="ban")
-async def ban(interaction, member: discord.Member, reason="no reason"):
+async def ban(interaction: discord.Interaction, member: discord.Member, reason: str = "no reason"):
     await member.ban(reason=reason)
     await interaction.response.send_message("🔨 bannato")
 
 @bot.tree.command(name="kick")
-async def kick(interaction, member: discord.Member, reason="no reason"):
+async def kick(interaction: discord.Interaction, member: discord.Member, reason: str = "no reason"):
     await member.kick(reason=reason)
     await interaction.response.send_message("👢 kickato")
 
 @bot.tree.command(name="clear")
-async def clear(interaction, amount: int):
+async def clear(interaction: discord.Interaction, amount: int):
     await interaction.channel.purge(limit=amount)
     await interaction.response.send_message("🧹 pulito", ephemeral=True)
 
@@ -160,7 +166,7 @@ async def clear(interaction, amount: int):
 # WARN SYSTEM
 # =========================
 @bot.tree.command(name="warn")
-async def warn(interaction, member: discord.Member, reason="no reason"):
+async def warn(interaction: discord.Interaction, member: discord.Member, reason: str = "no reason"):
 
     warns = load_warns()
     uid = str(member.id)
@@ -171,17 +177,17 @@ async def warn(interaction, member: discord.Member, reason="no reason"):
     await interaction.response.send_message("⚠️ warn dato")
 
 @bot.tree.command(name="warns")
-async def warns(interaction, member: discord.Member):
+async def warns(interaction: discord.Interaction, member: discord.Member):
 
     warns = load_warns().get(str(member.id), [])
 
     await interaction.response.send_message("\n".join(warns) if warns else "nessun warn")
 
 # =========================
-# ANTI SPAM
+# ANTI SPAM (FIXED)
 # =========================
 @bot.event
-async def on_message(message):
+async def on_message(message: discord.Message):
 
     global spam_cache
 
@@ -201,23 +207,12 @@ async def on_message(message):
     await bot.process_commands(message)
 
 # =========================
-# ANTI RAID
-# =========================
-@bot.event
-async def on_member_join(member):
-
-    global raid_mode
-
-    if raid_mode:
-        await member.kick(reason="anti raid")
-
-# =========================
-# TICKET SYSTEM
+# TICKET SYSTEM (FIXED)
 # =========================
 class TicketView(discord.ui.View):
 
     @discord.ui.button(label="Apri Ticket", emoji="🎫", style=discord.ButtonStyle.danger)
-    async def open(self, interaction, button):
+    async def open(self, interaction: discord.Interaction, button: discord.ui.Button):
 
         guild = interaction.guild
         user = interaction.user
@@ -240,35 +235,17 @@ class TicketView(discord.ui.View):
             await channel.set_permissions(staff, read_messages=True, send_messages=True)
 
         embed = discord.Embed(
-            title="🔴 TICKET UNITY",
+            title="🔴 UNITY TICKET",
             description=f"{user.mention}",
             color=discord.Color.red()
         )
 
-        await channel.send(embed=embed, view=TicketControl())
+        await channel.send(embed=embed)
 
         await interaction.response.send_message(f"🎫 {channel.mention}", ephemeral=True)
 
-class TicketControl(discord.ui.View):
-
-    @discord.ui.button(label="Claim", emoji="👑", style=discord.ButtonStyle.success)
-    async def claim(self, interaction, button):
-
-        role = discord.utils.get(interaction.guild.roles, name=STAFF_ROLE)
-
-        if role not in interaction.user.roles:
-            return await interaction.response.send_message("❌ solo staff", ephemeral=True)
-
-        await interaction.channel.send(f"👑 claim {interaction.user.mention}")
-
-    @discord.ui.button(label="Chiudi", emoji="🔒", style=discord.ButtonStyle.danger)
-    async def close(self, interaction, button):
-
-        await interaction.response.send_message("🔴 chiuso", ephemeral=True)
-        await interaction.channel.delete()
-
 @bot.tree.command(name="ticketpanel")
-async def ticketpanel(interaction):
+async def ticketpanel(interaction: discord.Interaction):
 
     embed = discord.Embed(
         title="🔴 UNITY TICKETS",
@@ -280,12 +257,12 @@ async def ticketpanel(interaction):
     await interaction.response.send_message(embed=embed, view=TicketView())
 
 # =========================
-# ADMIN DASHBOARD
+# DASHBOARD ADMIN
 # =========================
 class AdminView(discord.ui.View):
 
     @discord.ui.button(label="Raid ON/OFF", style=discord.ButtonStyle.danger)
-    async def raid(self, interaction, button):
+    async def raid(self, interaction: discord.Interaction, button: discord.ui.Button):
 
         global raid_mode
         raid_mode = not raid_mode
@@ -293,7 +270,7 @@ class AdminView(discord.ui.View):
         await interaction.response.send_message(f"🚨 raid {raid_mode}", ephemeral=True)
 
 @bot.tree.command(name="dashboard")
-async def dashboard(interaction):
+async def dashboard(interaction: discord.Interaction):
 
     if not interaction.user.guild_permissions.administrator:
         return await interaction.response.send_message("❌ no permessi", ephemeral=True)
