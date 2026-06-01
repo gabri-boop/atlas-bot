@@ -21,9 +21,11 @@ intents.members = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # =========================
-# BANNER
+# CONFIG
 # =========================
 BANNER_URL = "https://cdn.discordapp.com/attachments/1482844068009738434/1511074300755574975/ChatGPT_Image_1_giu_2026_20_28_18.png"
+STAFF_ROLE_NAME = "Staff"
+TICKET_CATEGORY = "🎫 TICKETS"
 
 # =========================
 # READY
@@ -31,20 +33,17 @@ BANNER_URL = "https://cdn.discordapp.com/attachments/1482844068009738434/1511074
 @bot.event
 async def on_ready():
     print(f"🤖 UNITY BOT ONLINE ({bot.user})")
-    try:
-        await bot.tree.sync()
-        print("Slash commands sincronizzati")
-    except Exception as e:
-        print(e)
+    await bot.tree.sync()
 
 # =========================
-# VERIFY SYSTEM
+# VERIFY SYSTEM (RED)
 # =========================
 class VerifyView(discord.ui.View):
+
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="Verificami", style=discord.ButtonStyle.success, emoji="✅")
+    @discord.ui.button(label="Verificami", emoji="🔴", style=discord.ButtonStyle.danger)
     async def verify(self, interaction: discord.Interaction, button: discord.ui.Button):
 
         role = discord.utils.get(interaction.guild.roles, name="Membro")
@@ -64,7 +63,7 @@ class VerifyView(discord.ui.View):
         await interaction.user.add_roles(role)
 
         await interaction.response.send_message(
-            "✅ Verifica completata!",
+            "🔴 Verifica completata! Benvenuto in UNITY.",
             ephemeral=True
         )
 
@@ -72,9 +71,13 @@ class VerifyView(discord.ui.View):
 async def verifypanel(interaction: discord.Interaction):
 
     embed = discord.Embed(
-        title="🔒 UNITY VERIFICA",
-        description="Premi il bottone per verificarti.",
-        color=discord.Color.from_rgb(0, 90, 200)
+        title="🔴 VERIFICA UNITY",
+        description=(
+            "👋 Benvenuto!\n\n"
+            "Premi il bottone per verificarti\n\n"
+            "🔴 Accesso ai canali"
+        ),
+        color=discord.Color.red()
     )
 
     embed.set_image(url=BANNER_URL)
@@ -82,7 +85,7 @@ async def verifypanel(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed, view=VerifyView())
 
 # =========================
-# ANNUNCI
+# ANNUNCI (RED)
 # =========================
 @bot.tree.command(name="annunci")
 async def annunci(interaction: discord.Interaction, titolo: str, messaggio: str):
@@ -94,9 +97,9 @@ async def annunci(interaction: discord.Interaction, titolo: str, messaggio: str)
         )
 
     embed = discord.Embed(
-        title=f"📢 {titolo}",
+        title=f"🔴 {titolo}",
         description=messaggio,
-        color=discord.Color.blue()
+        color=discord.Color.red()
     )
 
     embed.set_image(url=BANNER_URL)
@@ -104,37 +107,77 @@ async def annunci(interaction: discord.Interaction, titolo: str, messaggio: str)
     await interaction.channel.send(embed=embed)
 
     await interaction.response.send_message(
-        "✅ Annuncio inviato",
+        "🔴 Annuncio inviato",
         ephemeral=True
     )
 
 # =========================
-# TICKET (SEMPLICE E STABILE)
+# TICKET SYSTEM (ADVANCED RED)
 # =========================
-class TicketView(discord.ui.View):
+class TicketControlView(discord.ui.View):
 
-    @discord.ui.button(label="Apri Ticket", style=discord.ButtonStyle.primary, emoji="🎫")
-    async def ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Claim", style=discord.ButtonStyle.success, emoji="👑")
+    async def claim(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        staff_role = discord.utils.get(interaction.guild.roles, name=STAFF_ROLE_NAME)
+
+        if staff_role not in interaction.user.roles:
+            return await interaction.response.send_message(
+                "❌ Solo staff",
+                ephemeral=True
+            )
+
+        await interaction.channel.send(f"👑 Ticket preso da {interaction.user.mention}")
+        await interaction.response.send_message("🔴 Claim effettuato", ephemeral=True)
+
+    @discord.ui.button(label="Chiudi", style=discord.ButtonStyle.danger, emoji="🔒")
+    async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        await interaction.response.send_message("🔴 Ticket chiuso", ephemeral=True)
+        await interaction.channel.delete()
+
+
+class TicketOpenView(discord.ui.View):
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Apri Ticket", style=discord.ButtonStyle.danger, emoji="🎫")
+    async def open(self, interaction: discord.Interaction, button: discord.ui.Button):
 
         guild = interaction.guild
         user = interaction.user
 
-        category = discord.utils.get(guild.categories, name="TICKETS")
+        category = discord.utils.get(guild.categories, name=TICKET_CATEGORY)
         if category is None:
-            category = await guild.create_category("TICKETS")
+            category = await guild.create_category(TICKET_CATEGORY)
 
         channel = await guild.create_text_channel(
-            name=f"ticket-{user.name}",
+            name=f"ticket-{user.name}".lower(),
             category=category
         )
+
+        staff_role = discord.utils.get(guild.roles, name=STAFF_ROLE_NAME)
 
         await channel.set_permissions(guild.default_role, read_messages=False)
         await channel.set_permissions(user, read_messages=True, send_messages=True)
 
-        await channel.send(f"🎫 Ticket aperto da {user.mention}")
+        if staff_role:
+            await channel.set_permissions(staff_role, read_messages=True, send_messages=True)
+
+        embed = discord.Embed(
+            title="🔴 TICKET UNITY",
+            description=f"Supporto per {user.mention}",
+            color=discord.Color.red()
+        )
+
+        await channel.send(embed=embed, view=TicketControlView())
 
         await interaction.response.send_message(
-            f"Ticket creato: {channel.mention}",
+            f"🔴 Ticket creato: {channel.mention}",
             ephemeral=True
         )
 
@@ -142,14 +185,14 @@ class TicketView(discord.ui.View):
 async def ticketpanel(interaction: discord.Interaction):
 
     embed = discord.Embed(
-        title="🎫 UNITY TICKET",
-        description="Premi per aprire un ticket",
-        color=discord.Color.blue()
+        title="🔴 UNITY TICKETS",
+        description="Apri un ticket per supporto",
+        color=discord.Color.red()
     )
 
     embed.set_image(url=BANNER_URL)
 
-    await interaction.response.send_message(embed=embed, view=TicketView())
+    await interaction.response.send_message(embed=embed, view=TicketOpenView())
 
 # =========================
 # RUN
