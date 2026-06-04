@@ -49,9 +49,15 @@ async def log(guild, text):
 # =========================
 def get_text_channel_by_names(guild, names):
     for name in names:
-        channel = discord.utils.get(guild.text_channels, name=name)
+        channel = discord.utils.find(lambda c: c.name.lower() == name.lower(), guild.text_channels)
         if channel:
             return channel
+
+    for name in names:
+        channel = discord.utils.find(lambda c: name.lower() in c.name.lower(), guild.text_channels)
+        if channel:
+            return channel
+
     return None
 
 # =========================
